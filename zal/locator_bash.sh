@@ -2,8 +2,24 @@
 
 function print_help {
 cat << EOF
-Super cool help message!
+-l - wypisz liste znanych lokalizacji
+-a NAZWA - zapisz aktualna lokalizacje jako NAZWA
+-d NAZWA - usun lokalizacje
 EOF
+}
+
+function add {
+# check if exists
+	`echo "LOCATION $location_name" >> .location.rc`
+
+	for ind in `seq 0 $index`
+	do	
+		`echo "${Addresses[$ind]} ${Essids[$ind]}" >> .location.rc`
+	done
+}
+
+function read {
+	
 }
 
 for param in $* 
@@ -15,8 +31,17 @@ do
 	fi
 done
 
+if [ `whoami` !=  "root" ]; then
+	echo "Uruchom program przez sudo, zeby miec uprawnienia do skanowania sieci!"
+	exit 0
+fi
+
+declare -a Addresses
+declare -a Essids
+
 address=""
 essid=""
+index=0
 
 while read line
 do
@@ -28,10 +53,18 @@ do
 	fi
 
 	if [ ${#address} -gt 0 -a ${#essid} -gt 0 ]; then
-		echo "address $address essid $essid"
+		Addresses[$index]=$address
+		Essids[$index]=$essid
+
+		let index=$index+1
+
 		address=""
 		essid=""
 	fi
 
-done < <(sudo iwlist wlan1 scanning)
+done < <(iwlist wlan1 scanning)
 
+if [ $1 = '-a' -a -n $2 ]; then
+	location_name=$2;
+	add
+fi
