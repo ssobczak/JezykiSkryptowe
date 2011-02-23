@@ -2,7 +2,13 @@
 
 function print_help {
 cat << EOF
--n zlokalizuj, ale nie wykonuj skryptu
+Program skanuje liste dostepnych sieci bezprzewodowych. 
+Znalezione sieci przyrownuje do listy zapamietanych i na tej podstawie "zgaduje", gdzie sie znajduje.
+Po zlokalizowaniu wykonuje skrypt o nazwie .NAZWA_LOKALIZACJI.sh
+Plik skryptu jest tworzony w momencie dodania lokalizacji
+
+Parametry:
+-s zlokalizuj i wykonaj odpowiedni skrypt
 -l - wypisz liste znanych lokalizacji
 -l NAZWA - wypisz sieci zapisane w lokalizacji NAZWA
 -a NAZWA - zapisz aktualna lokalizacje jako NAZWA
@@ -11,8 +17,11 @@ EOF
 }
 
 function add {
-# check if exists
 	`echo "LOCATION $location_name" >> .location.rc`
+	
+	`echo "#!/bin/bash" > .$location_name.sh`
+	`echo "# Skrypt zostanie wykonany, gdy locator stwierdzi, ze znajduje sie w lokalizacji $location_name" >> .$location_name.sh`
+	`echo "echo \"Jestem w $location_name\"" >> .$location_name.sh`
 
 	for ind in `seq 0 $index`
 	do	
@@ -21,14 +30,16 @@ function add {
 }
 
 function read_locations {
-	index=0
-	while read line
-	do
-		if [ -n "`echo $line | grep LOCATION`" ]; then
-			Locations[$index]=`echo $line | sed -e "s/LOCATION \(.*\)$/\1/g"`
-			let index=$index+1
-		fi
-	done < ".location.rc"
+	if [ -e ".location.rc" ]; then 
+		index=0
+		while read line
+		do
+			if [ -n "`echo $line | grep LOCATION`" ]; then
+				Locations[$index]=`echo $line | sed -e "s/LOCATION \(.*\)$/\1/g"`
+				let index=$index+1
+			fi
+		done < ".location.rc"
+	fi
 }
 
 function read_cfg {
@@ -68,6 +79,7 @@ function remove_location {
 
 	`rm .location.rc`
 	`mv .location_new.rc .location.rc`
+	`rm .$location_name.sh`
 }
 
 function localize {
@@ -101,7 +113,13 @@ function localize {
         fi 	
 
 	echo "$best_name (with $best_matches matches)"
+	echo `sh .$best_name.sh`
 }
+
+if [ "$1" == "" ]; then
+	print_help
+	exit 0
+fi
 
 for param in $* 
 do
@@ -122,7 +140,7 @@ declare -a Addresses
 declare -a Essids
 
 
-if [ $1 = '-l' ]; then
+if [ "$1" == "-l" ]; then
 	if [ "$2" != "" ]; then
 		location_name=$2
 		read_cfg
@@ -166,10 +184,24 @@ do
 
 done < <(iwlist wlan1 scanning)
 
-if [ $1 = '-a' -a "$2" != "" ]; then
+if [ "$1" == "-a" ]; then
+	if [ "$2" == "" ]; then
+		echo "Brak drugiego parametru - nazwy lokalizacji."
+		exit 0
+	fi
+
+	read_locations
+	for loc in ${Locations[@]} 
+	do
+		if [ "$loc" == "$2" ]; then
+			echo "Podana nazwa jest juz zajeta!"
+			exit 0
+		fi
+	done
+
 	location_name=$2;
 	add
-elif [ $1 = '-n' ]; then
+elif [[ "$1" = "-s" ]]; then
 	localize
 fi
 
