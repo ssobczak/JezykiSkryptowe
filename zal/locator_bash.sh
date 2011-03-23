@@ -116,6 +116,11 @@ function localize {
 	echo `sh .$best_name.sh`
 }
 
+if [ `whoami` !=  "root" ]; then
+	echo "Uruchom program przez sudo, zeby miec uprawnienia do skanowania sieci!"
+	exit 0
+fi
+
 if [ "$1" == "" ]; then
 	print_help
 	exit 0
@@ -129,11 +134,6 @@ do
 		exit 0
 	fi
 done
-
-if [ `whoami` !=  "root" ]; then
-	echo "Uruchom program przez sudo, zeby miec uprawnienia do skanowania sieci!"
-	exit 0
-fi
 
 declare -a Loccations
 declare -a Addresses
@@ -163,6 +163,9 @@ address=""
 essid=""
 index=0
 
+interface=`ifconfig | grep wlan | sed -e "s/\(wlan[0-9]*\).*/\1/g"`
+echo "Do skanowania uzywam interfejsu $interface"
+
 while read line
 do
 
@@ -182,7 +185,7 @@ do
 		essid=""
 	fi
 
-done < <(iwlist wlan1 scanning)
+done < <(iwlist $interface scanning)
 
 if [ "$1" == "-a" ]; then
 	if [ "$2" == "" ]; then
