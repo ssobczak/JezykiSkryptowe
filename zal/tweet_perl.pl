@@ -1,11 +1,18 @@
 #!/usr/bin/perl -w
 
+
 use strict;
 use warnings;
 
+use Cwd 'abs_path';
+use File::Basename;
 use Getopt::Long;
 
 require Tweet;
+
+BEGIN { 
+	 push @INC, dirname(abs_path($0));
+}
 
 my $user = ''; 
 my $max = 10; 
