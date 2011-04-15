@@ -19,4 +19,13 @@ GetOptions('p|port=i' => \$port, 's|state=s' => \$state, 'c|choinka=i' => \$choi
 
 $help and Choinka::print_help() and exit 0;
 
-Choinka::listen_forever($port, "choinka$choinka.txt", $state);
+$choinka = "choinka$choinka.txt";
+
+if( -e $choinka)
+{
+	Choinka::listen_forever($port, $choinka, $state);
+}
+else
+{
+	die "Plik $choinka nie istnieje!";
+}
