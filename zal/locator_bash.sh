@@ -7,6 +7,8 @@ Znalezione sieci przyrownuje do listy zapamietanych i na tej podstawie "zgaduje"
 Po zlokalizowaniu wykonuje skrypt o nazwie .NAZWA_LOKALIZACJI.sh
 Plik skryptu jest tworzony w momencie dodania lokalizacji
 
+Program musi byc uruchomiony z uprawnieniami roota, zeby miec mozliwosc skanowania sieci.
+
 Parametry:
 -s zlokalizuj i wykonaj odpowiedni skrypt
 -l - wypisz liste znanych lokalizacji
@@ -116,11 +118,6 @@ function localize {
 	echo `sh .$best_name.sh`
 }
 
-if [ `whoami` !=  "root" ]; then
-	echo "Uruchom program przez sudo, zeby miec uprawnienia do skanowania sieci!"
-	exit 0
-fi
-
 if [ "$1" == "" ]; then
 	print_help
 	exit 0
@@ -134,6 +131,11 @@ do
 		exit 0
 	fi
 done
+
+if [ `whoami` !=  "root" ]; then
+	echo "Uruchom program przez sudo, zeby miec uprawnienia do skanowania sieci!"
+	exit 0
+fi
 
 declare -a Loccations
 declare -a Addresses
